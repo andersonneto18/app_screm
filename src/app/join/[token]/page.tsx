@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -29,12 +30,12 @@ export default async function InvitePage(props: PageProps<"/join/[token]">) {
             Este convite expirou, foi revogado ou já atingiu o limite de
             utilizações.
           </CardDescription>
-          <a
+          <Link
             href="/join"
             className="mt-4 inline-block text-sm text-primary hover:underline"
           >
             Entrar com um código
-          </a>
+          </Link>
         </Card>
       </main>
     </>

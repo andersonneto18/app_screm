@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getIdentity } from "@/lib/auth/session";
@@ -28,12 +29,12 @@ export default async function RoomPage(props: PageProps<"/room/[slug]">) {
       <div className="grid min-h-full flex-1 place-items-center p-6 text-center">
         <div>
           <h1 className="text-lg font-medium">A transmissão terminou.</h1>
-          <a
+          <Link
             href="/"
             className="mt-4 inline-block text-sm text-primary hover:underline"
           >
             Voltar ao início
-          </a>
+          </Link>
         </div>
       </div>
     );

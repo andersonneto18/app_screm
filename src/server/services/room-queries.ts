@@ -162,6 +162,16 @@ export async function getRoomDetail(
       )
     : undefined;
 
+  // Non-members (viewing the join gate) don't get the participant list.
+  const members = self
+    ? room.members.map((m) => ({
+        id: m.id,
+        displayName: m.displayName,
+        role: m.role,
+        isSelf: self.id === m.id,
+      }))
+    : [];
+
   return {
     slug: room.slug,
     name: room.name,
@@ -173,15 +183,10 @@ export async function getRoomDetail(
     allowAudio: room.allowAudio,
     allowGuests: room.allowGuests,
     maxParticipants: room.maxParticipants,
-    ownerName: room.owner.name,
+    ownerName: self ? room.owner.name : null,
     viewerRole: self?.role ?? null,
     viewerMemberId: self?.id ?? null,
-    members: room.members.map((m) => ({
-      id: m.id,
-      displayName: m.displayName,
-      role: m.role,
-      isSelf: self?.id === m.id,
-    })),
+    members,
   };
 }
 

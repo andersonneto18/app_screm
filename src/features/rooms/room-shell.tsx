@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { DisconnectReason, Room } from "livekit-client";
@@ -75,7 +76,7 @@ export function RoomShell({
         <MonitorPlay className="h-10 w-10 text-muted-2" />
         <h1 className="mt-4 text-lg font-medium">Foi removido desta sala.</h1>
         <Button asChild variant="outline" className="mt-6">
-          <a href="/">Voltar ao início</a>
+          <Link href="/">Voltar ao início</Link>
         </Button>
       </Centered>
     );
@@ -140,7 +141,7 @@ function EndedView() {
       <MonitorPlay className="h-10 w-10 text-muted-2" />
       <h1 className="mt-4 text-lg font-medium">A transmissão terminou.</h1>
       <Button asChild variant="outline" className="mt-6">
-        <a href="/">Voltar ao início</a>
+        <Link href="/">Voltar ao início</Link>
       </Button>
     </Centered>
   );
