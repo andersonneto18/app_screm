@@ -22,6 +22,7 @@ import type { RoomDetail } from "@/server/services/room-queries";
 import { ScreenStage } from "./screen-stage";
 import { ShareControls } from "./share-controls";
 import { InvitePanel } from "./invite-panel";
+import { ParticipantMenu } from "./participant-menu";
 
 type Tab = "participants" | "chat";
 
@@ -156,9 +157,17 @@ export function RoomLayout({
           <div className="flex-1 overflow-y-auto p-3">
             {tab === "participants" ? (
               <ParticipantList
+                slug={slug}
                 detail={detail}
-                liveIdentities={new Set(participants.map((p) => p.identity))}
+                onlineNames={
+                  new Set(
+                    participants
+                      .map((p) => p.name)
+                      .filter((n): n is string => Boolean(n)),
+                  )
+                }
                 canManage={canManage}
+                onChange={refreshDetail}
               />
             ) : (
               <div className="grid h-full place-items-center text-center text-sm text-muted">
@@ -181,45 +190,64 @@ export function RoomLayout({
 }
 
 function ParticipantList({
+  slug,
   detail,
-  liveIdentities,
+  onlineNames,
   canManage,
+  onChange,
 }: {
+  slug: string;
   detail: RoomDetail;
-  liveIdentities: Set<string>;
+  onlineNames: Set<string>;
   canManage: boolean;
+  onChange: () => void;
 }) {
+  const actorRole = detail.viewerRole === "MODERATOR" ? "MODERATOR" : "OWNER";
   return (
     <ul className="space-y-1">
-      {detail.members.map((m) => (
-        <li
-          key={m.id}
-          className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-surface-2"
-        >
-          <span className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-surface-3 text-xs font-medium">
-              {m.displayName.charAt(0).toUpperCase()}
-            </span>
-            <span>
-              <span className="flex items-center gap-1 text-sm text-foreground">
-                {m.role === "OWNER" && (
-                  <Crown className="h-3.5 w-3.5 text-yellow-400" />
-                )}
-                {m.displayName}
-                {m.isSelf && (
-                  <span className="text-xs text-muted-2">· você</span>
-                )}
+      {detail.members.map((m) => {
+        const online = m.isSelf || onlineNames.has(m.displayName);
+        return (
+          <li
+            key={m.id}
+            className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-surface-2"
+          >
+            <span className="flex items-center gap-2">
+              <span className="relative grid h-7 w-7 place-items-center rounded-full bg-surface-3 text-xs font-medium">
+                {m.displayName.charAt(0).toUpperCase()}
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface",
+                    online ? "bg-success" : "bg-muted-2",
+                  )}
+                />
               </span>
-              <span className="block text-xs text-muted">
-                {ROLE_LABEL[m.role]}
+              <span>
+                <span className="flex items-center gap-1 text-sm text-foreground">
+                  {m.role === "OWNER" && (
+                    <Crown className="h-3.5 w-3.5 text-yellow-400" />
+                  )}
+                  {m.displayName}
+                  {m.isSelf && (
+                    <span className="text-xs text-muted-2">· você</span>
+                  )}
+                </span>
+                <span className="block text-xs text-muted">
+                  {ROLE_LABEL[m.role]}
+                </span>
               </span>
             </span>
-          </span>
-          {canManage && !m.isSelf && m.role !== "OWNER" && (
-            <span className="text-xs text-muted-2">Fase 4</span>
-          )}
-        </li>
-      ))}
+            {canManage && !m.isSelf && m.role !== "OWNER" && (
+              <ParticipantMenu
+                slug={slug}
+                member={m}
+                actorRole={actorRole}
+                onDone={onChange}
+              />
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
