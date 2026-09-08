@@ -7,14 +7,7 @@ import {
   useParticipants,
 } from "@livekit/components-react";
 import { ConnectionState } from "livekit-client";
-import {
-  Crown,
-  LogOut,
-  Maximize,
-  MessageSquare,
-  Users,
-  Volume2,
-} from "lucide-react";
+import { Crown, LogOut, Maximize, MessageSquare, Users } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { cn, formatDuration } from "@/lib/utils";
@@ -47,7 +40,7 @@ export function RoomLayout({
   const connection = useConnectionState();
   const participants = useParticipants();
   const { floating, send: react } = useReactions();
-  const [tab, setTab] = useState<Tab>("participants");
+  const [tab, setTab] = useState<Tab>("chat");
   const [busy, setBusy] = useState(false);
 
   // A platform admin gets full host controls in any room.
@@ -78,34 +71,33 @@ export function RoomLayout({
   }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex h-14 items-center justify-between border-b border-border px-4">
-        <div className="flex items-center gap-3">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border px-3 sm:h-14 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Logo />
-          <span className="hidden text-sm text-muted sm:inline">
-            / {detail.name}
-          </span>
+          <span className="truncate text-sm text-muted">/ {detail.name}</span>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex shrink-0 items-center gap-2 text-sm sm:gap-3">
           <ConnectionBadge state={connection} live={isLive} />
-          <span className="text-muted">{viewerName}</span>
+          <span className="hidden text-muted sm:inline">{viewerName}</span>
         </div>
       </header>
 
       {connection === ConnectionState.Reconnecting && (
-        <p className="bg-yellow-500/10 px-4 py-1.5 text-center text-xs text-yellow-500">
+        <p className="shrink-0 bg-yellow-500/10 px-4 py-1.5 text-center text-xs text-yellow-500">
           A reconectar…
         </p>
       )}
 
-      <div className="flex flex-1 flex-col lg:flex-row">
-        <div className="flex flex-1 flex-col">
-          <div className="relative flex min-h-[42vh] flex-1 lg:min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* Media + controls */}
+        <div className="flex min-w-0 flex-col lg:flex-1">
+          <div className="relative aspect-video w-full overflow-hidden bg-black lg:aspect-auto lg:min-h-0 lg:flex-1">
             <ScreenStage isOwner={isOwner} />
             <ReactionOverlay floating={floating} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border px-3 py-2 sm:gap-2 sm:px-4 sm:py-3">
             <ShareControls
               slug={slug}
               canPublish={canManage}
@@ -113,25 +105,13 @@ export function RoomLayout({
               onStatusChange={refreshDetail}
             />
             <ReactionBar onReact={react} />
-            {!isOwner && (
-              <>
-                <FullscreenButton />
-                <span className="hidden items-center gap-1.5 px-2 text-sm text-muted sm:inline-flex">
-                  <Volume2 className="h-4 w-4" /> Volume no player
-                </span>
-              </>
-            )}
+            {!isOwner && <FullscreenButton />}
 
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
               {canManage && <InvitePanel slug={slug} />}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={leave}
-                disabled={busy}
-              >
+              <Button variant="ghost" size="sm" onClick={leave} disabled={busy}>
                 <LogOut className="h-4 w-4" />
-                Sair
+                <span className="hidden sm:inline">Sair</span>
               </Button>
               {isOwner && (
                 <Button
@@ -140,26 +120,28 @@ export function RoomLayout({
                   onClick={endRoom}
                   disabled={busy}
                 >
-                  Terminar sala
+                  <span className="sm:hidden">Terminar</span>
+                  <span className="hidden sm:inline">Terminar sala</span>
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        <aside className="flex max-h-[48vh] w-full shrink-0 flex-col border-t border-border lg:max-h-none lg:w-80 lg:border-l lg:border-t-0">
-          <div className="flex border-b border-border">
-            <TabButton
-              active={tab === "participants"}
-              onClick={() => setTab("participants")}
-              icon={Users}
-              label={`Participantes (${Math.max(participants.length, detail.members.length)})`}
-            />
+        {/* Sidebar: fills the rest on mobile, fixed column on desktop */}
+        <aside className="flex min-h-0 flex-1 flex-col border-t border-border lg:w-80 lg:flex-none lg:border-l lg:border-t-0">
+          <div className="flex shrink-0 border-b border-border">
             <TabButton
               active={tab === "chat"}
               onClick={() => setTab("chat")}
               icon={MessageSquare}
               label="Chat"
+            />
+            <TabButton
+              active={tab === "participants"}
+              onClick={() => setTab("participants")}
+              icon={Users}
+              label={`Pessoas · ${Math.max(participants.length, detail.members.length)}`}
             />
           </div>
 
@@ -292,17 +274,28 @@ function LiveTimer() {
 }
 
 function FullscreenButton() {
+  async function toggle() {
+    const el = document.querySelector<HTMLElement>("[data-screen-stage]");
+    if (!el) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      await el.requestFullscreen();
+      // Best-effort: land in landscape on a phone.
+      const orientation = screen.orientation as
+        | (ScreenOrientation & { lock?: (o: string) => Promise<void> })
+        | undefined;
+      await orientation?.lock?.("landscape").catch(() => {});
+    } catch {
+      /* not supported / denied */
+    }
+  }
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => {
-        const el = document.querySelector("[data-screen-stage]");
-        if (el && document.fullscreenEnabled) void el.requestFullscreen();
-      }}
-    >
+    <Button variant="ghost" size="sm" onClick={toggle}>
       <Maximize className="h-4 w-4" />
-      Tela cheia
+      <span className="hidden sm:inline">Tela cheia</span>
     </Button>
   );
 }

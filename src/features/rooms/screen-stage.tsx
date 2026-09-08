@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  isTrackReference,
-  StartAudio,
-  useTracks,
-  VideoTrack,
-} from "@livekit/components-react";
+import { isTrackReference, useTracks, VideoTrack } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { MonitorPlay } from "lucide-react";
+import { AudioUnlock } from "./audio-unlock";
 
 export function ScreenStage({ isOwner }: { isOwner: boolean }) {
   const tracks = useTracks(
@@ -19,19 +15,16 @@ export function ScreenStage({ isOwner }: { isOwner: boolean }) {
   return (
     <div
       data-screen-stage
-      className="relative flex flex-1 items-center justify-center bg-black p-0"
+      className="absolute inset-0 flex items-center justify-center bg-black"
     >
       {screen ? (
-        <VideoTrack
-          trackRef={screen}
-          className="h-full max-h-full w-full object-contain"
-        />
+        <VideoTrack trackRef={screen} className="h-full w-full object-contain" />
       ) : (
         <div className="p-4 text-center">
-          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-border">
-            <MonitorPlay className="h-7 w-7 text-muted-2" />
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-border">
+            <MonitorPlay className="h-6 w-6 text-muted-2" />
           </div>
-          <p className="mt-4 text-sm text-foreground">
+          <p className="mt-3 text-sm text-foreground">
             {isOwner
               ? "Ainda não iniciou a partilha"
               : "O anfitrião ainda não iniciou a partilha."}
@@ -42,11 +35,7 @@ export function ScreenStage({ isOwner }: { isOwner: boolean }) {
         </div>
       )}
 
-      {/* Shown only when the browser blocks audio autoplay (iOS Safari etc.). */}
-      <StartAudio
-        label="🔊  Toque para ativar o som"
-        className="absolute inset-0 z-10 grid place-items-center bg-black/55 text-base font-medium text-white backdrop-blur-sm"
-      />
+      <AudioUnlock />
     </div>
   );
 }

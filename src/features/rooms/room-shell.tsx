@@ -129,7 +129,7 @@ export function RoomShell({
       video={false}
       onError={onError}
       onDisconnected={onDisconnected}
-      className="flex min-h-full flex-1 flex-col"
+      className="contents"
     >
       <RoomAudioRenderer />
       <RoomLayout
@@ -156,7 +156,7 @@ function EndedView() {
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-full flex-1 place-items-center p-6 text-center">
+    <div className="fixed inset-0 grid place-items-center bg-background p-6 text-center">
       <div className="flex flex-col items-center">{children}</div>
     </div>
   );
