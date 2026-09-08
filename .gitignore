@@ -40,6 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma generated client (regenerated on install via postinstall)
+/src/generated/
+
+# keep an example env, ignore the rest
+!.env.example
+
 # OS / IDE
 .DS_Store
 Thumbs.db

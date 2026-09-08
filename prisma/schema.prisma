@@ -1,0 +1,195 @@
+// ScreenRoom - Prisma schema
+// Media never touches this DB. Only app state: users, rooms, membership, invites, moderation, chat, audit.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth (Auth.js / NextAuth v5)
+// Credentials login uses passwordHash on User; Account/Session support OAuth.
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  emailVerified DateTime?
+  image        String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  ownedRooms   Room[]        @relation("RoomOwner")
+  memberships  RoomMember[]
+  auditLogs    AuditLog[]    @relation("AuditActor")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Rooms
+// ---------------------------------------------------------------------------
+
+enum RoomVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum RoomStatus {
+  WAITING
+  LIVE
+  ENDED
+}
+
+enum RoomRole {
+  OWNER
+  MODERATOR
+  VIEWER
+}
+
+model Room {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  name            String
+  ownerId         String
+  visibility      RoomVisibility @default(PRIVATE)
+  passwordHash    String?
+  allowGuests     Boolean        @default(true)
+  allowChat       Boolean        @default(true)
+  allowAudio      Boolean        @default(true)
+  maxParticipants Int            @default(10)
+  status          RoomStatus     @default(WAITING)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  endedAt         DateTime?
+
+  owner    User          @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members  RoomMember[]
+  invites  RoomInvite[]
+  bans     RoomBan[]
+  messages ChatMessage[]
+  auditLogs AuditLog[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model RoomMember {
+  id          String    @id @default(cuid())
+  roomId      String
+  userId      String?
+  guestId     String?
+  displayName String
+  role        RoomRole  @default(VIEWER)
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+
+  room     Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+
+  @@unique([roomId, userId])
+  @@unique([roomId, guestId])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model RoomInvite {
+  id        String    @id @default(cuid())
+  roomId    String
+  tokenHash String    @unique // SHA-256 of the raw invite token; raw token never stored
+  expiresAt DateTime
+  maxUses   Int?
+  uses      Int       @default(0)
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+}
+
+model RoomBan {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String?
+  guestId   String?
+  ipHash    String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([roomId, userId])
+  @@index([roomId, guestId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  memberId  String
+  content   String   @db.VarChar(1000)
+  createdAt DateTime @default(now())
+
+  room   Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  member RoomMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  roomId    String?
+  actorId   String?
+  event     String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  room  Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, createdAt])
+}
