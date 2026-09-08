@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { DisconnectReason, Room } from "livekit-client";
+import { DisconnectReason, Room, ScreenSharePresets } from "livekit-client";
 import { MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RoomDetail } from "@/server/services/room-queries";
@@ -38,9 +38,16 @@ export function RoomShell({
   const room = useMemo(
     () =>
       new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        publishDefaults: { simulcast: true },
+        adaptiveStream: true, // viewers only pull the quality their view needs
+        dynacast: true, // pause layers nobody is watching
+        publishDefaults: {
+          // Crisp 1080p30 for text/UI; VP9 SVC gives 1:N efficiency, with a
+          // VP8 backup for browsers that can't decode VP9.
+          screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
+          videoCodec: "vp9",
+          backupCodec: true,
+          degradationPreference: "maintain-resolution",
+        },
       }),
     [],
   );

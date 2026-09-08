@@ -43,6 +43,11 @@ export function ShareControls({
       // Let the browser present its own screen/window/tab picker; never auto-pick.
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
         audio: allowAudio,
+        resolution: { width: 1920, height: 1080, frameRate: 30 },
+        contentHint: "detail", // optimise the encoder for text/UI sharpness
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: allowAudio ? "include" : "exclude",
       });
     } catch (err) {
       // User dismissed the picker → not an error worth showing.
