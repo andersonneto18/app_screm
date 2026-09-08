@@ -100,7 +100,7 @@ export function RoomLayout({
 
       <div className="flex flex-1 flex-col lg:flex-row">
         <div className="flex flex-1 flex-col">
-          <div className="relative flex flex-1">
+          <div className="relative flex min-h-[42vh] flex-1 lg:min-h-0">
             <ScreenStage isOwner={isOwner} />
             <ReactionOverlay floating={floating} />
           </div>
@@ -147,7 +147,7 @@ export function RoomLayout({
           </div>
         </div>
 
-        <aside className="flex max-h-[60vh] w-full shrink-0 flex-col border-t border-border lg:max-h-none lg:w-80 lg:border-l lg:border-t-0">
+        <aside className="flex max-h-[48vh] w-full shrink-0 flex-col border-t border-border lg:max-h-none lg:w-80 lg:border-l lg:border-t-0">
           <div className="flex border-b border-border">
             <TabButton
               active={tab === "participants"}

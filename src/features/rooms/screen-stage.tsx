@@ -2,6 +2,7 @@
 
 import {
   isTrackReference,
+  StartAudio,
   useTracks,
   VideoTrack,
 } from "@livekit/components-react";
@@ -40,6 +41,12 @@ export function ScreenStage({ isOwner }: { isOwner: boolean }) {
           </p>
         </div>
       )}
+
+      {/* Shown only when the browser blocks audio autoplay (iOS Safari etc.). */}
+      <StartAudio
+        label="🔊  Toque para ativar o som"
+        className="absolute inset-0 z-10 grid place-items-center bg-black/55 text-base font-medium text-white backdrop-blur-sm"
+      />
     </div>
   );
 }
