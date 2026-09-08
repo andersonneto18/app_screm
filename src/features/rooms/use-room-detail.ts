@@ -25,7 +25,9 @@ export function useRoomDetail(slug: string, initial: RoomDetail) {
   }, [slug]);
 
   useEffect(() => {
-    const id = setInterval(refresh, 5000);
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 15000);
     return () => clearInterval(id);
   }, [refresh]);
 
