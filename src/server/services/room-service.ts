@@ -6,6 +6,7 @@ import { AppError, Errors } from "@/lib/api/http";
 import { logger } from "@/lib/logger";
 import type { CreateRoomInput, UpdateRoomInput } from "@/schemas/room";
 import type { Identity } from "@/lib/auth/session";
+import { deleteLivekitRoom } from "@/lib/livekit/token";
 import { recordAudit } from "./audit-service";
 
 const MAX_SLUG_ATTEMPTS = 5;
@@ -243,6 +244,7 @@ export async function endRoom(roomId: string, actorId: string): Promise<void> {
       data: { revokedAt: new Date() },
     }),
   ]);
+  await deleteLivekitRoom(roomId);
   await recordAudit({ roomId, actorId, event: "room.ended" });
 }
 
