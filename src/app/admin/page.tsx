@@ -6,8 +6,10 @@ import { Card, CardDescription } from "@/components/ui/card";
 import { requireSession } from "@/lib/auth/guards";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { listAllRooms } from "@/server/services/room-queries";
+import { getPlatformSettings } from "@/server/services/settings-service";
 import { CreateRoomDialog } from "@/features/rooms/create-room-dialog";
 import { AdminRoomRow } from "@/features/admin/admin-room-row";
+import { AdminSettings } from "@/features/admin/admin-settings";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -20,7 +22,10 @@ export default async function AdminPage() {
   const session = await requireSession("/admin");
   if (!isAdminEmail(session.user.email)) notFound();
 
-  const rooms = await listAllRooms();
+  const [rooms, settings] = await Promise.all([
+    listAllRooms(),
+    getPlatformSettings(),
+  ]);
   const live = rooms.filter((r) => r.status === "LIVE");
   const waiting = rooms.filter((r) => r.status === "WAITING");
   const ended = rooms.filter((r) => r.status === "ENDED");
@@ -46,6 +51,10 @@ export default async function AdminPage() {
           <Stat label="À espera" value={waiting.length} />
           <Stat label="Terminadas" value={ended.length} />
         </div>
+
+        <AdminSettings
+          initialAllowUserBroadcast={settings.allowUserBroadcast}
+        />
 
         <Group title="Ao vivo agora" rooms={live} />
         <Group title="À espera" rooms={waiting} />

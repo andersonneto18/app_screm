@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { requireSession } from "@/lib/auth/guards";
+import { isAdminEmail } from "@/lib/auth/admin";
 import {
   listOwnedRooms,
   listJoinedRooms,
 } from "@/server/services/room-queries";
+import { getPlatformSettings } from "@/server/services/settings-service";
 import { CreateRoomDialog } from "@/features/rooms/create-room-dialog";
 import { RoomCard } from "@/features/rooms/room-card";
 
@@ -16,11 +18,14 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const session = await requireSession("/dashboard");
-  const [owned, joined] = await Promise.all([
+  const [owned, joined, settings] = await Promise.all([
     listOwnedRooms(session.user.id),
     listJoinedRooms(session.user.id),
+    getPlatformSettings(),
   ]);
 
+  const canCreate =
+    isAdminEmail(session.user.email) || settings.allowUserBroadcast;
   const active = owned.filter((r) => r.status !== "ENDED");
   const history = owned.filter((r) => r.status === "ENDED");
 
@@ -34,17 +39,30 @@ export default async function DashboardPage() {
               Olá, {session.user.name ?? "de volta"}
             </h1>
             <p className="mt-1 text-muted">
-              Crie uma sala e partilhe o seu ecrã em segundos.
+              {canCreate
+                ? "Crie uma sala e partilhe o seu ecrã em segundos."
+                : "Veja o que o anfitrião está a transmitir e participe no chat."}
             </p>
           </div>
-          <CreateRoomDialog />
+          {canCreate ? (
+            <CreateRoomDialog />
+          ) : (
+            <Link
+              href="/rooms"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+            >
+              Ver salas ao vivo
+            </Link>
+          )}
         </div>
 
-        <Section title="As suas salas" empty="Ainda não criou nenhuma sala.">
-          {active.map((room) => (
-            <RoomCard key={room.slug} room={room} />
-          ))}
-        </Section>
+        {(canCreate || active.length > 0) && (
+          <Section title="As suas salas" empty="Ainda não criou nenhuma sala.">
+            {active.map((room) => (
+              <RoomCard key={room.slug} room={room} />
+            ))}
+          </Section>
+        )}
 
         {joined.length > 0 && (
           <Section title="Salas onde entrou">

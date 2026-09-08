@@ -12,6 +12,16 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
+// Platform-wide settings (key/value, admin-controlled).
+// ---------------------------------------------------------------------------
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
 // Auth (Auth.js / NextAuth v5)
 // Credentials login uses passwordHash on User; Account/Session support OAuth.
 // ---------------------------------------------------------------------------
