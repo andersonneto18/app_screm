@@ -44,7 +44,7 @@ export default async function RoomPage(props: PageProps<"/room/[slug]">) {
   const viewerName =
     session?.user?.name ?? session?.user?.email ?? "Convidado";
 
-  if (!detail.viewerRole) {
+  if (!detail.viewerRole && !detail.viewerIsAdmin) {
     return (
       <JoinGate
         slug={slug}

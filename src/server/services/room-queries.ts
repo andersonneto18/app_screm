@@ -70,6 +70,31 @@ export async function listPublicRooms(limit = 30): Promise<RoomSummary[]> {
   return rooms.map(toSummary);
 }
 
+export interface AdminRoomRow extends RoomSummary {
+  ownerName: string | null;
+  ownerEmail: string;
+  updatedAt: string;
+}
+
+/** Every room, for the admin panel. */
+export async function listAllRooms(limit = 200): Promise<AdminRoomRow[]> {
+  const rooms = await db.room.findMany({
+    select: {
+      ...summarySelect,
+      updatedAt: true,
+      owner: { select: { name: true, email: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+  });
+  return rooms.map((r) => ({
+    ...toSummary(r),
+    ownerName: r.owner.name,
+    ownerEmail: r.owner.email,
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+}
+
 export async function listOwnedRooms(userId: string): Promise<RoomSummary[]> {
   const rooms = await db.room.findMany({
     where: { ownerId: userId },
@@ -116,6 +141,8 @@ export interface RoomDetail {
   ownerName: string | null;
   viewerRole: RoomRole | null;
   viewerMemberId: string | null;
+  /** Caller is a platform admin — gets host controls in every room. */
+  viewerIsAdmin: boolean;
   members: RoomMemberView[];
 }
 
@@ -162,13 +189,17 @@ export async function getRoomDetail(
       )
     : undefined;
 
+  const viewerIsAdmin =
+    identity?.kind === "user" && identity.isAdmin === true;
+  const visible = Boolean(self) || viewerIsAdmin;
+
   // Non-members (viewing the join gate) don't get the participant list.
-  const members = self
+  const members = visible
     ? room.members.map((m) => ({
         id: m.id,
         displayName: m.displayName,
         role: m.role,
-        isSelf: self.id === m.id,
+        isSelf: self?.id === m.id,
       }))
     : [];
 
@@ -183,9 +214,10 @@ export async function getRoomDetail(
     allowAudio: room.allowAudio,
     allowGuests: room.allowGuests,
     maxParticipants: room.maxParticipants,
-    ownerName: self ? room.owner.name : null,
+    ownerName: visible ? room.owner.name : null,
     viewerRole: self?.role ?? null,
     viewerMemberId: self?.id ?? null,
+    viewerIsAdmin,
     members,
   };
 }

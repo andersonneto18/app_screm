@@ -48,8 +48,10 @@ export function RoomLayout({
   const [tab, setTab] = useState<Tab>("participants");
   const [busy, setBusy] = useState(false);
 
-  const isOwner = detail.viewerRole === "OWNER";
-  const canManage = isOwner || detail.viewerRole === "MODERATOR";
+  // A platform admin gets full host controls in any room.
+  const isOwner = detail.viewerRole === "OWNER" || detail.viewerIsAdmin;
+  const canManage =
+    isOwner || detail.viewerRole === "MODERATOR" || detail.viewerIsAdmin;
   const isLive = detail.status === "LIVE";
 
   async function post(path: string) {

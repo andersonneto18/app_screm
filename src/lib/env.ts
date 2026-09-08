@@ -15,6 +15,8 @@ const serverSchema = z.object({
   AUTH_GOOGLE_ID: z.string().optional().or(z.literal("")),
   AUTH_GOOGLE_SECRET: z.string().optional().or(z.literal("")),
   REDIS_URL: z.string().optional().or(z.literal("")),
+  // Comma-separated list of platform-admin emails.
+  ADMIN_EMAILS: z.string().optional().or(z.literal("")),
 });
 
 const clientSchema = z.object({

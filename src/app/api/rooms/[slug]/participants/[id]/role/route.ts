@@ -9,8 +9,11 @@ const bodySchema = z.object({ role: z.enum(["MODERATOR", "VIEWER"]) });
 
 export const POST = handleRoute<Ctx>(async (req, ctx) => {
   const { slug, id } = await ctx.params;
-  const { room, member } = await loadRoomContext(slug, "PROMOTE_MODERATOR");
+  const { room, member, isAdmin } = await loadRoomContext(
+    slug,
+    "PROMOTE_MODERATOR",
+  );
   const { role } = await parseBody(req, bodySchema);
-  await setParticipantRole(room.id, id, member, role);
+  await setParticipantRole(room.id, id, member, role, isAdmin);
   return json({ role });
 });

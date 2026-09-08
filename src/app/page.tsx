@@ -10,6 +10,9 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { ContentShelf } from "@/features/content/content-shelf";
+
+export const dynamic = "force-dynamic";
 
 const FEATURES = [
   {
@@ -47,18 +50,18 @@ export default function HomePage() {
               Partilha de ecrã em tempo real
             </span>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Partilhe o seu ecrã em segundos.
+              Transmita o seu ecrã. Assistam juntos.
             </h1>
             <p className="mt-4 text-lg text-muted">
               Crie uma sala privada, partilhe o link e transmita o seu ecrã em
-              tempo real.
+              tempo real para os seus amigos.
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               <Button asChild size="lg">
-                <Link href="/dashboard">Criar sala</Link>
+                <Link href="/dashboard">Começar a transmitir</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/join">Entrar numa sala</Link>
+                <Link href="/rooms">Ver salas ao vivo</Link>
               </Button>
             </div>
           </div>
@@ -72,6 +75,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <ContentShelf />
 
         <section className="mx-auto max-w-6xl px-4 pb-24">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -28,7 +28,7 @@ export const POST = handleRoute(async (req) => {
   );
   if (!limit.success) throw Errors.tooMany();
 
-  const { room, identity, member } = await loadRoomContext(slug);
+  const { room, identity, member, isAdmin } = await loadRoomContext(slug);
   if (room.status === "ENDED") throw Errors.gone("A transmissão terminou");
 
   const grant = await createRoomToken({
@@ -36,6 +36,7 @@ export const POST = handleRoute(async (req) => {
     identity,
     role: member.role,
     displayName: member.displayName,
+    isAdmin,
   });
 
   return json(grant);

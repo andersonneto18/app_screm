@@ -14,12 +14,18 @@ function memberIdentity(member: Pick<RoomMember, "userId" | "guestId">): Identit
 
 /**
  * A moderator may act on viewers only; the owner may act on anyone but
- * themselves. Nobody may act on the owner.
+ * themselves. Nobody may act on the owner — except a platform admin, who may
+ * act on anyone but themselves.
  */
-function assertCanActOn(actor: RoomMember, target: RoomMember): void {
+function assertCanActOn(
+  actor: RoomMember,
+  target: RoomMember,
+  isAdmin: boolean,
+): void {
   if (actor.id === target.id) {
     throw Errors.badRequest("Não pode fazer isto a si próprio");
   }
+  if (isAdmin) return;
   if (target.role === "OWNER") {
     throw new PermissionError("REMOVE_PARTICIPANT");
   }
@@ -40,9 +46,10 @@ export async function kickParticipant(
   roomId: string,
   memberId: string,
   actor: RoomMember,
+  isAdmin = false,
 ): Promise<void> {
   const target = await loadTarget(roomId, memberId);
-  assertCanActOn(actor, target);
+  assertCanActOn(actor, target, isAdmin);
 
   await db.roomMember.update({
     where: { id: target.id },
@@ -62,9 +69,10 @@ export async function banParticipant(
   memberId: string,
   actor: RoomMember,
   reason?: string,
+  isAdmin = false,
 ): Promise<void> {
   const target = await loadTarget(roomId, memberId);
-  assertCanActOn(actor, target);
+  assertCanActOn(actor, target, isAdmin);
 
   await db.$transaction([
     db.roomBan.create({
@@ -89,14 +97,17 @@ export async function banParticipant(
   });
 }
 
-/** Owner-only. Promote a viewer to moderator or demote a moderator to viewer. */
+/** Owner (or platform admin) only: promote a viewer or demote a moderator. */
 export async function setParticipantRole(
   roomId: string,
   memberId: string,
   actor: RoomMember,
   role: Extract<RoomRole, "MODERATOR" | "VIEWER">,
+  isAdmin = false,
 ): Promise<void> {
-  if (actor.role !== "OWNER") throw new PermissionError("PROMOTE_MODERATOR");
+  if (actor.role !== "OWNER" && !isAdmin) {
+    throw new PermissionError("PROMOTE_MODERATOR");
+  }
 
   const target = await loadTarget(roomId, memberId);
   if (target.role === "OWNER") throw new PermissionError("PROMOTE_MODERATOR");

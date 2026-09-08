@@ -1,0 +1,138 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Check, Copy, ExternalLink, Link2, Square, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { AdminRoomRow as Row } from "@/server/services/room-queries";
+
+export function AdminRoomRow({ room }: { room: Row }) {
+  const router = useRouter();
+  const [invite, setInvite] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"link" | "invite" | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const roomLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/room/${room.slug}`
+      : `/room/${room.slug}`;
+
+  async function copy(value: string, which: "link" | "invite") {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(which);
+      setTimeout(() => setCopied(null), 1600);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function genInvite() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/rooms/${room.slug}/invites`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ expiresInHours: 24, maxUses: null }),
+      });
+      const data = (await res.json().catch(() => null)) as { url?: string } | null;
+      if (data?.url) {
+        setInvite(data.url);
+        await copy(data.url, "invite");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function endRoom() {
+    if (!confirm(`Terminar "${room.name}"?`)) return;
+    setBusy(true);
+    try {
+      await fetch(`/api/rooms/${room.slug}`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            {room.status === "LIVE" && (
+              <span className="live-dot h-2 w-2 shrink-0 rounded-full bg-live" />
+            )}
+            <span className="truncate font-medium text-foreground">
+              {room.name}
+            </span>
+            {room.hasPassword && (
+              <span className="text-xs text-muted-2">🔒</span>
+            )}
+          </div>
+          <p className="mt-0.5 text-xs text-muted">
+            {room.ownerName ?? room.ownerEmail} · {room.visibility === "PUBLIC" ? "pública" : "privada"} ·{" "}
+            <Users className="inline h-3 w-3" /> {room.participantCount}/
+            {room.maxParticipants}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button size="sm" variant="secondary" onClick={() => copy(roomLink, "link")}>
+            {copied === "link" ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            Link
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={genInvite}
+            disabled={busy}
+          >
+            {copied === "invite" ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Link2 className="h-3.5 w-3.5" />
+            )}
+            Convite
+          </Button>
+          {room.status !== "ENDED" && (
+            <>
+              <Button asChild size="sm">
+                <Link href={`/room/${room.slug}`}>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Entrar
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={endRoom}
+                disabled={busy}
+              >
+                <Square className="h-3.5 w-3.5" />
+                Terminar
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {invite && (
+        <p
+          className={cn(
+            "mt-2 truncate rounded-md bg-surface-2 px-2 py-1 font-mono text-[11px] text-muted",
+          )}
+        >
+          {invite}
+        </p>
+      )}
+    </div>
+  );
+}

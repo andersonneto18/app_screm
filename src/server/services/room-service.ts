@@ -118,9 +118,11 @@ export async function joinRoom({
       return { room, member };
     }
 
+    const admin = identity.kind === "user" && identity.isAdmin === true;
+
     let invite: { id: string; maxUses: number | null; uses: number } | null =
       null;
-    if (inviteToken) {
+    if (inviteToken && !admin) {
       invite = await tx.roomInvite.findFirst({
         where: {
           roomId: room.id,
@@ -136,7 +138,8 @@ export async function joinRoom({
       }
     }
 
-    if (!invite) {
+    // Platform admins bypass guest/lock/password/capacity gates entirely.
+    if (!invite && !admin) {
       if (identity.kind === "guest" && !room.allowGuests) {
         throw Errors.forbidden("Esta sala não permite convidados");
       }
@@ -153,20 +156,22 @@ export async function joinRoom({
       }
     }
 
-    const activeCount = await tx.roomMember.count({
-      where: { roomId: room.id, leftAt: null },
-    });
-    if (activeCount >= room.maxParticipants) {
-      throw Errors.conflict("Sala cheia");
+    if (!admin) {
+      const activeCount = await tx.roomMember.count({
+        where: { roomId: room.id, leftAt: null },
+      });
+      if (activeCount >= room.maxParticipants) {
+        throw Errors.conflict("Sala cheia");
+      }
     }
 
     const member = await tx.roomMember.create({
       data: {
         roomId: room.id,
+        role: admin ? "MODERATOR" : "VIEWER",
         userId: identity.kind === "user" ? identity.id : null,
         guestId: identity.kind === "guest" ? identity.id : null,
         displayName,
-        role: "VIEWER",
       },
     });
 

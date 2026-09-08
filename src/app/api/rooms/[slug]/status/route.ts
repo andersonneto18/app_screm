@@ -11,13 +11,15 @@ const bodySchema = z.object({ status: z.enum(["WAITING", "LIVE"]) });
 
 export const POST = handleRoute<Ctx>(async (req, ctx) => {
   const { slug } = await ctx.params;
-  const { room, member } = await loadRoomContext(slug);
+  const { room, member, isAdmin } = await loadRoomContext(slug);
   const { status } = await parseBody(req, bodySchema);
 
-  requireRoomPermission(
-    member.role,
-    status === "LIVE" ? "START_SHARE" : "STOP_SHARE",
-  );
+  if (!isAdmin) {
+    requireRoomPermission(
+      member.role,
+      status === "LIVE" ? "START_SHARE" : "STOP_SHARE",
+    );
+  }
 
   await setRoomStatus(room.id, status);
   await recordAudit({

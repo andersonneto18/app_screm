@@ -24,26 +24,29 @@ interface GrantArgs {
   identity: Identity;
   role: RoomRole;
   displayName: string;
+  isAdmin?: boolean;
 }
 
 /**
  * Mint a LiveKit access token. The backend fully determines room, identity,
  * publish rights and metadata — the client never chooses any of them.
- * Only OWNER/MODERATOR may publish; VIEWER is subscribe-only.
+ * Only OWNER/MODERATOR (and platform admins) may publish; VIEWER is
+ * subscribe-only.
  */
 export async function createRoomToken({
   roomId,
   identity,
   role,
   displayName,
+  isAdmin = false,
 }: GrantArgs): Promise<{ token: string; url: string; expiresAt: number }> {
-  const canPublish = role === "OWNER" || role === "MODERATOR";
+  const canPublish = isAdmin || role === "OWNER" || role === "MODERATOR";
 
   const at = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
     identity: livekitIdentity(identity),
     name: displayName,
     ttl: TOKEN_TTL_SECONDS,
-    metadata: JSON.stringify({ role }),
+    metadata: JSON.stringify({ role, admin: isAdmin }),
   });
 
   at.addGrant({
