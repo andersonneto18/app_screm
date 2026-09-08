@@ -24,7 +24,16 @@ export interface ChatEnvelope {
   at: string;
 }
 
-export type RoomDataEnvelope = ChatEnvelope;
+/** Ephemeral emoji reaction — published client-to-client, never stored. */
+export interface ReactionEnvelope {
+  t: "reaction";
+  id: string;
+  emoji: string;
+  name: string;
+  at: string;
+}
+
+export type RoomDataEnvelope = ChatEnvelope | ReactionEnvelope;
 
 /** Broadcast a JSON envelope to every participant over the LiveKit data plane. */
 export async function broadcastToRoom(

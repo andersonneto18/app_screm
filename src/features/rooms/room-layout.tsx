@@ -24,6 +24,7 @@ import { ShareControls } from "./share-controls";
 import { InvitePanel } from "./invite-panel";
 import { ParticipantMenu } from "./participant-menu";
 import { ChatPanel } from "./chat-panel";
+import { ReactionBar, ReactionOverlay, useReactions } from "./reactions";
 
 type Tab = "participants" | "chat";
 
@@ -45,6 +46,7 @@ export function RoomLayout({
   const router = useRouter();
   const connection = useConnectionState();
   const participants = useParticipants();
+  const { floating, send: react } = useReactions();
   const [tab, setTab] = useState<Tab>("participants");
   const [busy, setBusy] = useState(false);
 
@@ -98,7 +100,10 @@ export function RoomLayout({
 
       <div className="flex flex-1 flex-col lg:flex-row">
         <div className="flex flex-1 flex-col">
-          <ScreenStage isOwner={isOwner} />
+          <div className="relative flex flex-1">
+            <ScreenStage isOwner={isOwner} />
+            <ReactionOverlay floating={floating} />
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
             <ShareControls
@@ -107,10 +112,11 @@ export function RoomLayout({
               allowAudio={detail.allowAudio}
               onStatusChange={refreshDetail}
             />
+            <ReactionBar onReact={react} />
             {!isOwner && (
               <>
                 <FullscreenButton />
-                <span className="inline-flex items-center gap-1.5 px-2 text-sm text-muted">
+                <span className="hidden items-center gap-1.5 px-2 text-sm text-muted sm:inline-flex">
                   <Volume2 className="h-4 w-4" /> Volume no player
                 </span>
               </>

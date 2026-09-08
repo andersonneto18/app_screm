@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import {
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Radio,
+  Settings,
+  Star,
+} from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +43,14 @@ export function UserMenu({ name }: { name: string }) {
         <MenuLink href="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />}>
           Painel
         </MenuLink>
+        <MenuLink href="/rooms" icon={<Radio className="h-4 w-4" />}>
+          Salas ao vivo
+        </MenuLink>
+        <span className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-2">
+          <Star className="h-4 w-4" />
+          Favoritos
+          <span className="ml-auto text-[10px] uppercase">Em breve</span>
+        </span>
         <MenuLink href="/settings" icon={<Settings className="h-4 w-4" />}>
           Definições
         </MenuLink>

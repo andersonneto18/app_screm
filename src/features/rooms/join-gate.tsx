@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock } from "lucide-react";
@@ -30,12 +30,15 @@ export function JoinGate({
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoTried = useRef(false);
 
   const canGuest = allowGuests || Boolean(inviteToken);
   const blocked = !isAuthenticated && !canGuest;
+  // Signed-in users with nothing to fill in are dropped straight into the room.
+  const autoJoin = isAuthenticated && !hasPassword && !blocked;
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(e?: React.FormEvent) {
+    e?.preventDefault();
     setPending(true);
     setError(null);
     try {
@@ -57,6 +60,25 @@ export function JoinGate({
       setError(err instanceof Error ? err.message : "Erro inesperado");
       setPending(false);
     }
+  }
+
+  useEffect(() => {
+    if (autoJoin && !autoTried.current) {
+      autoTried.current = true;
+      void submit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoJoin]);
+
+  if (autoJoin && !error) {
+    return (
+      <div className="grid min-h-full flex-1 place-items-center p-6">
+        <div className="flex flex-col items-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
+          <p className="mt-4 text-sm text-muted">A entrar em {roomName}…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
