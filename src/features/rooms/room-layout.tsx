@@ -23,6 +23,7 @@ import { ScreenStage } from "./screen-stage";
 import { ShareControls } from "./share-controls";
 import { InvitePanel } from "./invite-panel";
 import { ParticipantMenu } from "./participant-menu";
+import { ChatPanel } from "./chat-panel";
 
 type Tab = "participants" | "chat";
 
@@ -138,7 +139,7 @@ export function RoomLayout({
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col border-t border-border lg:w-80 lg:border-l lg:border-t-0">
+        <aside className="flex max-h-[60vh] w-full shrink-0 flex-col border-t border-border lg:max-h-none lg:w-80 lg:border-l lg:border-t-0">
           <div className="flex border-b border-border">
             <TabButton
               active={tab === "participants"}
@@ -154,8 +155,9 @@ export function RoomLayout({
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3">
+          <div className="min-h-0 flex-1 overflow-hidden p-3">
             {tab === "participants" ? (
+              <div className="h-full overflow-y-auto">
               <ParticipantList
                 slug={slug}
                 detail={detail}
@@ -169,14 +171,13 @@ export function RoomLayout({
                 canManage={canManage}
                 onChange={refreshDetail}
               />
-            ) : (
-              <div className="grid h-full place-items-center text-center text-sm text-muted">
-                <p>
-                  {detail.allowChat
-                    ? "Chat em tempo real — disponível na fase 5."
-                    : "O chat está desativado nesta sala."}
-                </p>
               </div>
+            ) : (
+              <ChatPanel
+                slug={slug}
+                allowChat={detail.allowChat}
+                selfMemberId={detail.viewerMemberId}
+              />
             )}
           </div>
 

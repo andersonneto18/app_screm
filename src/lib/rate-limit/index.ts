@@ -32,7 +32,13 @@ class MemoryStore implements RateLimitStore {
   }
 }
 
-const store: RateLimitStore = new MemoryStore();
+// Survive dev HMR / module re-evaluation — otherwise the window resets per edit.
+const globalForRateLimit = globalThis as unknown as {
+  __rateLimitStore?: RateLimitStore;
+};
+const store: RateLimitStore =
+  globalForRateLimit.__rateLimitStore ??
+  (globalForRateLimit.__rateLimitStore = new MemoryStore());
 
 export interface RateLimitRule {
   /** Max requests allowed per window. */
