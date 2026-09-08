@@ -48,13 +48,10 @@ export async function parseBody<T>(
 }
 
 /** Wrap a route handler: normalises thrown errors to JSON responses. */
-export function handleRoute(
-  fn: (req: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>,
+export function handleRoute<Ctx = unknown>(
+  fn: (req: Request, ctx: Ctx) => Promise<Response>,
 ) {
-  return async (
-    req: Request,
-    ctx: { params: Promise<Record<string, string>> },
-  ): Promise<Response> => {
+  return async (req: Request, ctx: Ctx): Promise<Response> => {
     try {
       return await fn(req, ctx);
     } catch (err) {
