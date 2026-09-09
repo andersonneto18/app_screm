@@ -43,9 +43,11 @@ export function ShareControls({
       // Let the browser present its own screen/window/tab picker; never auto-pick.
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
         audio: allowAudio,
-        // 720p: sharp on phones (the main audience), far lighter to encode
-        // and stream than 1080p, so the broadcast holds up better.
-        resolution: { width: 1280, height: 720, frameRate: 30 },
+        // Capture at 1080p so the top SVC layer really is 1080p for
+        // big-screen viewers. Dynacast means that layer is only encoded/sent
+        // while someone actually requests it — phone viewers pull 540p/270p
+        // and the host never pays for 1080p unless a TV/PC viewer asks.
+        resolution: { width: 1920, height: 1080, frameRate: 30 },
         contentHint: "motion", // smooth playback of video content
         selfBrowserSurface: "include",
         surfaceSwitching: "include",

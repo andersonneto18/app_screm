@@ -5,13 +5,55 @@ import { useTracks } from "@livekit/components-react";
 import { Track, VideoQuality, type RemoteTrackPublication } from "livekit-client";
 import { Gauge } from "lucide-react";
 
-type Choice = "auto" | "high" | "medium" | "low" | "audio";
+type Choice =
+  | "auto"
+  | "max"
+  | "high"
+  | "mid"
+  | "midlow"
+  | "low"
+  | "min"
+  | "audio";
 
-const OPTIONS: { value: Choice; label: string }[] = [
+interface Option {
+  value: Choice;
+  label: string;
+  /** Cap by resolution (maps to the nearest encoded layer). */
+  dims?: { width: number; height: number };
+  /** Cap by SVC layer. */
+  quality?: VideoQuality;
+  /** Cap the frame rate the server sends this viewer. */
+  fps?: number;
+}
+
+const OPTIONS: Option[] = [
   { value: "auto", label: "Automática" },
-  { value: "high", label: "Alta (720p)" },
-  { value: "medium", label: "Média (360p)" },
-  { value: "low", label: "Baixa — poupar dados" },
+  {
+    value: "max",
+    label: "Máxima · 1080p",
+    dims: { width: 1920, height: 1080 },
+    fps: 30,
+  },
+  {
+    value: "high",
+    label: "Alta · 1080p · 20 fps",
+    dims: { width: 1920, height: 1080 },
+    fps: 20,
+  },
+  { value: "mid", label: "Média · 540p", quality: VideoQuality.MEDIUM, fps: 30 },
+  {
+    value: "midlow",
+    label: "Média · 540p · 15 fps",
+    quality: VideoQuality.MEDIUM,
+    fps: 15,
+  },
+  { value: "low", label: "Baixa · 270p", quality: VideoQuality.LOW, fps: 30 },
+  {
+    value: "min",
+    label: "Dados mínimos · 270p · 10 fps",
+    quality: VideoQuality.LOW,
+    fps: 10,
+  },
   { value: "audio", label: "Só áudio" },
 ];
 
@@ -29,9 +71,10 @@ function load(): Choice {
 }
 
 /**
- * Lets each viewer cap the video quality they receive — useful on a phone
- * with a weak signal or a limited data plan. "Automática" hands control back
- * to adaptive streaming (quality follows the view size and the connection).
+ * Lets each viewer pick the video quality they receive — useful on a phone
+ * with a weak signal or a limited data plan, or on a big screen that wants
+ * the full 1080p. "Automática" hands control back to adaptive streaming
+ * (quality follows the view size and the connection).
  */
 export function QualityMenu() {
   // Client-only (rendered inside <LiveKitRoom> after connect) — safe to read
@@ -49,19 +92,25 @@ export function QualityMenu() {
 
   useEffect(() => {
     if (!publication) return;
+    const opt = OPTIONS.find((o) => o.value === choice) ?? OPTIONS[0];
     try {
-      if (choice === "audio") {
+      if (opt.value === "audio") {
         publication.setEnabled(false);
         return;
       }
       publication.setEnabled(true);
-      publication.setVideoQuality(
-        choice === "low"
-          ? VideoQuality.LOW
-          : choice === "medium"
-            ? VideoQuality.MEDIUM
-            : VideoQuality.HIGH, // "high" and "auto" both cap at HIGH; adaptive trims "auto" down by view size
-      );
+
+      if (opt.value === "auto") {
+        // Reset any manual cap; adaptive dimensions drive it again.
+        publication.setVideoQuality(VideoQuality.HIGH);
+        publication.setVideoFPS(30);
+        return;
+      }
+
+      if (opt.dims) publication.setVideoDimensions(opt.dims);
+      else if (opt.quality !== undefined)
+        publication.setVideoQuality(opt.quality);
+      if (opt.fps) publication.setVideoFPS(opt.fps);
     } catch {
       /* not subscribed yet — re-runs when the publication changes */
     }
