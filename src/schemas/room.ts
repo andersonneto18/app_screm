@@ -14,8 +14,14 @@ export const displayNameSchema = z
 
 export const roomPasswordSchema = z.string().min(4).max(128);
 
+const roomTitleSchema = z.string().trim().min(1, "Dê um nome à sala").max(80);
+const roomDescriptionSchema = z.string().trim().max(160);
+const coverImageSchema = z.string().url().max(500);
+
 export const createRoomSchema = z.object({
-  name: z.string().trim().min(1, "Dê um nome à sala").max(80),
+  name: roomTitleSchema,
+  description: roomDescriptionSchema.optional().or(z.literal("")),
+  coverImage: coverImageSchema.optional().or(z.literal("")),
   visibility: z.enum(["PUBLIC", "PRIVATE"]).default("PRIVATE"),
   password: roomPasswordSchema.optional().or(z.literal("")),
   allowGuests: z.boolean().default(true),
@@ -27,7 +33,9 @@ export type CreateRoomInput = z.infer<typeof createRoomSchema>;
 
 export const updateRoomSchema = z
   .object({
-    name: z.string().trim().min(1).max(80),
+    name: roomTitleSchema,
+    description: roomDescriptionSchema.nullable(),
+    coverImage: coverImageSchema.nullable(),
     visibility: z.enum(["PUBLIC", "PRIVATE"]),
     allowChat: z.boolean(),
     allowAudio: z.boolean(),

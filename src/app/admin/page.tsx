@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth/guards";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { listAllRooms } from "@/server/services/room-queries";
 import { getPlatformSettings } from "@/server/services/settings-service";
+import { blobEnabled } from "@/lib/media/blob";
 import { CreateRoomDialog } from "@/features/rooms/create-room-dialog";
 import { AdminRoomRow } from "@/features/admin/admin-room-row";
 import { AdminSettings } from "@/features/admin/admin-settings";
@@ -56,10 +57,23 @@ export default async function AdminPage() {
           initialAllowUserBroadcast={settings.allowUserBroadcast}
         />
 
-        <Group title="Ao vivo agora" rooms={live} />
-        <Group title="À espera" rooms={waiting} />
+        <Group
+          title="Ao vivo agora"
+          rooms={live}
+          uploadsEnabled={blobEnabled}
+        />
+        <Group
+          title="À espera"
+          rooms={waiting}
+          uploadsEnabled={blobEnabled}
+        />
         {ended.length > 0 && (
-          <Group title="Histórico" rooms={ended.slice(0, 20)} muted />
+          <Group
+            title="Histórico"
+            rooms={ended.slice(0, 20)}
+            uploadsEnabled={blobEnabled}
+            muted
+          />
         )}
 
         <p className="mt-10 text-sm text-muted">
@@ -99,10 +113,12 @@ function Stat({
 function Group({
   title,
   rooms,
+  uploadsEnabled,
   muted,
 }: {
   title: string;
   rooms: Awaited<ReturnType<typeof listAllRooms>>;
+  uploadsEnabled: boolean;
   muted?: boolean;
 }) {
   if (rooms.length === 0) return null;
@@ -113,7 +129,11 @@ function Group({
       </h2>
       <div className={`mt-3 space-y-2 ${muted ? "opacity-70" : ""}`}>
         {rooms.map((room) => (
-          <AdminRoomRow key={room.slug} room={room} />
+          <AdminRoomRow
+            key={room.slug}
+            room={room}
+            uploadsEnabled={uploadsEnabled}
+          />
         ))}
       </div>
     </section>

@@ -10,6 +10,8 @@ import { Toggle } from "@/components/ui/toggle";
 
 interface State {
   name: string;
+  description: string;
+  coverImage: string;
   visibility: "PUBLIC" | "PRIVATE";
   password: string;
   allowGuests: boolean;
@@ -20,6 +22,8 @@ interface State {
 
 const initial: State = {
   name: "",
+  description: "",
+  coverImage: "",
   visibility: "PRIVATE",
   password: "",
   allowGuests: true,
@@ -54,6 +58,8 @@ export function CreateRoomDialog({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...state,
+          description: state.description.trim() || undefined,
+          coverImage: state.coverImage.trim() || undefined,
           password: state.password || undefined,
         }),
       });
@@ -86,7 +92,7 @@ export function CreateRoomDialog({
         <form onSubmit={submit} className="space-y-5">
           <label className="block space-y-1.5">
             <span className="text-sm font-medium text-foreground">
-              Nome da sala
+              Título da sala
             </span>
             <Input
               autoFocus
@@ -95,6 +101,35 @@ export function CreateRoomDialog({
               placeholder="Sessão de programação"
               value={state.name}
               onChange={(e) => set("name", e.target.value)}
+            />
+          </label>
+
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-foreground">
+              Descrição{" "}
+              <span className="text-xs font-normal text-muted-2">(opcional)</span>
+            </span>
+            <textarea
+              rows={2}
+              maxLength={160}
+              placeholder="Uma linha sobre o que vais transmitir"
+              value={state.description}
+              onChange={(e) => set("description", e.target.value)}
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm placeholder:text-muted-2 focus-visible:border-border-strong focus-visible:outline-none"
+            />
+          </label>
+
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-foreground">
+              Capa{" "}
+              <span className="text-xs font-normal text-muted-2">
+                (URL — podes carregar uma imagem depois de criar)
+              </span>
+            </span>
+            <Input
+              placeholder="https://…/imagem.jpg"
+              value={state.coverImage}
+              onChange={(e) => set("coverImage", e.target.value)}
             />
           </label>
 

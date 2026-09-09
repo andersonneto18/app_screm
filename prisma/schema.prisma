@@ -103,6 +103,8 @@ model Room {
   id              String         @id @default(cuid())
   slug            String         @unique
   name            String
+  description     String?        @db.VarChar(160)
+  coverImage      String?        @db.VarChar(500)
   ownerId         String
   visibility      RoomVisibility @default(PRIVATE)
   passwordHash    String?

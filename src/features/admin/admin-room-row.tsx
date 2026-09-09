@@ -7,8 +7,15 @@ import { Check, Copy, ExternalLink, Link2, Square, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AdminRoomRow as Row } from "@/server/services/room-queries";
+import { EditRoomDialog } from "@/features/rooms/edit-room-dialog";
 
-export function AdminRoomRow({ room }: { room: Row }) {
+export function AdminRoomRow({
+  room,
+  uploadsEnabled,
+}: {
+  room: Row;
+  uploadsEnabled: boolean;
+}) {
   const router = useRouter();
   const [invite, setInvite] = useState<string | null>(null);
   const [copied, setCopied] = useState<"link" | "invite" | null>(null);
@@ -61,26 +68,53 @@ export function AdminRoomRow({ room }: { room: Row }) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            {room.status === "LIVE" && (
-              <span className="live-dot h-2 w-2 shrink-0 rounded-full bg-live" />
-            )}
-            <span className="truncate font-medium text-foreground">
-              {room.name}
-            </span>
-            {room.hasPassword && (
-              <span className="text-xs text-muted-2">🔒</span>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="hidden h-12 w-20 shrink-0 overflow-hidden rounded-md bg-surface-2 sm:block">
+            {room.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={room.coverImage}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             )}
           </div>
-          <p className="mt-0.5 text-xs text-muted">
-            {room.ownerName ?? room.ownerEmail} · {room.visibility === "PUBLIC" ? "pública" : "privada"} ·{" "}
-            <Users className="inline h-3 w-3" /> {room.participantCount}/
-            {room.maxParticipants}
-          </p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {room.status === "LIVE" && (
+                <span className="live-dot h-2 w-2 shrink-0 rounded-full bg-live" />
+              )}
+              <span className="truncate font-medium text-foreground">
+                {room.name}
+              </span>
+              {room.hasPassword && (
+                <span className="text-xs text-muted-2">🔒</span>
+              )}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted">
+              {room.description ??
+                `${room.ownerName ?? room.ownerEmail} · ${room.visibility === "PUBLIC" ? "pública" : "privada"}`}{" "}
+              · <Users className="inline h-3 w-3" /> {room.participantCount}/
+              {room.maxParticipants}
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
+          {room.status !== "ENDED" && (
+            <EditRoomDialog
+              room={{
+                slug: room.slug,
+                name: room.name,
+                description: room.description,
+                coverImage: room.coverImage,
+                visibility: room.visibility,
+                maxParticipants: room.maxParticipants,
+                locked: room.locked,
+              }}
+              uploadsEnabled={uploadsEnabled}
+            />
+          )}
           <Button size="sm" variant="secondary" onClick={() => copy(roomLink, "link")}>
             {copied === "link" ? (
               <Check className="h-3.5 w-3.5" />

@@ -17,6 +17,9 @@ const serverSchema = z.object({
   REDIS_URL: z.string().optional().or(z.literal("")),
   // Comma-separated list of platform-admin emails.
   ADMIN_EMAILS: z.string().optional().or(z.literal("")),
+  // Vercel Blob — room cover uploads. Injected automatically once a Blob
+  // store is created for the project. Optional (covers also accept URLs).
+  BLOB_READ_WRITE_TOKEN: z.string().optional().or(z.literal("")),
 });
 
 const clientSchema = z.object({

@@ -28,6 +28,8 @@ export async function createRoom(
           data: {
             slug,
             name: input.name,
+            description: input.description || null,
+            coverImage: input.coverImage || null,
             ownerId,
             visibility: input.visibility,
             passwordHash,
@@ -193,6 +195,8 @@ export async function updateRoom(
 ): Promise<Room> {
   const data: Prisma.RoomUpdateInput = {};
   if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description || null;
+  if (input.coverImage !== undefined) data.coverImage = input.coverImage || null;
   if (input.visibility !== undefined) data.visibility = input.visibility;
   if (input.allowChat !== undefined) data.allowChat = input.allowChat;
   if (input.allowAudio !== undefined) data.allowAudio = input.allowAudio;

@@ -10,6 +10,8 @@ const identityWhere = (identity: Identity) =>
 export interface RoomSummary {
   slug: string;
   name: string;
+  description: string | null;
+  coverImage: string | null;
   status: "WAITING" | "LIVE" | "ENDED";
   visibility: "PUBLIC" | "PRIVATE";
   hasPassword: boolean;
@@ -23,6 +25,8 @@ export interface RoomSummary {
 function toSummary(room: {
   slug: string;
   name: string;
+  description: string | null;
+  coverImage: string | null;
   status: RoomSummary["status"];
   visibility: RoomSummary["visibility"];
   passwordHash: string | null;
@@ -35,6 +39,8 @@ function toSummary(room: {
   return {
     slug: room.slug,
     name: room.name,
+    description: room.description,
+    coverImage: room.coverImage,
     status: room.status,
     visibility: room.visibility,
     hasPassword: room.passwordHash !== null,
@@ -49,6 +55,8 @@ function toSummary(room: {
 const summarySelect = {
   slug: true,
   name: true,
+  description: true,
+  coverImage: true,
   status: true,
   visibility: true,
   passwordHash: true,
@@ -130,6 +138,8 @@ export interface RoomMemberView {
 export interface RoomDetail {
   slug: string;
   name: string;
+  description: string | null;
+  coverImage: string | null;
   status: RoomSummary["status"];
   visibility: RoomSummary["visibility"];
   hasPassword: boolean;
@@ -157,6 +167,8 @@ export async function getRoomDetail(
       id: true,
       slug: true,
       name: true,
+      description: true,
+      coverImage: true,
       status: true,
       visibility: true,
       passwordHash: true,
@@ -206,6 +218,8 @@ export async function getRoomDetail(
   return {
     slug: room.slug,
     name: room.name,
+    description: room.description,
+    coverImage: room.coverImage,
     status: room.status,
     visibility: room.visibility,
     hasPassword: room.passwordHash !== null,
