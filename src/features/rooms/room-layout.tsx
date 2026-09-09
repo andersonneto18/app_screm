@@ -273,30 +273,82 @@ function LiveTimer() {
   return <span className="tabular-nums">Em direto · {formatDuration(seconds)}</span>;
 }
 
+type FsElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+type FsVideo = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitSupportsFullscreen?: boolean;
+};
+type FsDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+
 function FullscreenButton() {
+  const [note, setNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!note) return;
+    const id = setTimeout(() => setNote(null), 4000);
+    return () => clearTimeout(id);
+  }, [note]);
+
   async function toggle() {
-    const el = document.querySelector<HTMLElement>("[data-screen-stage]");
-    if (!el) return;
+    setNote(null);
+    const stage = document.querySelector<FsElement>("[data-screen-stage]");
+    const target = (stage?.parentElement as FsElement | null) ?? stage;
+    const video = stage?.querySelector<FsVideo>("video") ?? null;
+    const doc = document as FsDocument;
+
     try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
+      if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+        await (doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
         return;
       }
-      await el.requestFullscreen();
+
+      if (target?.requestFullscreen) {
+        await target.requestFullscreen();
+      } else if (target?.webkitRequestFullscreen) {
+        await target.webkitRequestFullscreen();
+      } else if (video?.webkitEnterFullscreen) {
+        // iPhone Safari: only a <video> can go fullscreen, only while playing.
+        if (video.readyState < 1) {
+          setNote("Aguarde a transmissão começar.");
+          return;
+        }
+        video.webkitEnterFullscreen();
+        return;
+      } else {
+        setNote("O seu navegador não permite ecrã inteiro aqui.");
+        return;
+      }
+
       // Best-effort: land in landscape on a phone.
-      const orientation = screen.orientation as
-        | (ScreenOrientation & { lock?: (o: string) => Promise<void> })
-        | undefined;
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (o: string) => Promise<void>;
+      };
       await orientation?.lock?.("landscape").catch(() => {});
     } catch {
-      /* not supported / denied */
+      setNote("Não foi possível abrir em ecrã inteiro.");
     }
   }
+
   return (
-    <Button variant="ghost" size="sm" onClick={toggle}>
-      <Maximize className="h-4 w-4" />
-      <span className="hidden sm:inline">Tela cheia</span>
-    </Button>
+    <>
+      <Button variant="ghost" size="sm" onClick={toggle}>
+        <Maximize className="h-4 w-4" />
+        <span className="hidden sm:inline">Tela cheia</span>
+      </Button>
+      {note && (
+        <span
+          role="status"
+          className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-black/85 px-3 py-1.5 text-xs text-white"
+        >
+          {note}
+        </span>
+      )}
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { DisconnectReason, Room, ScreenSharePresets } from "livekit-client";
+import { DisconnectReason, Room } from "livekit-client";
 import { MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RoomDetail } from "@/server/services/room-queries";
@@ -41,12 +41,18 @@ export function RoomShell({
         adaptiveStream: true, // viewers only pull the quality their view needs
         dynacast: true, // pause layers nobody is watching
         publishDefaults: {
-          // Crisp 1080p30 for text/UI; VP9 SVC gives 1:N efficiency, with a
-          // VP8 backup for browsers that can't decode VP9.
-          screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
+          // Tuned for broadcasting video content (watch-party) rather than
+          // static UI: keep motion smooth and let resolution scale down under
+          // congestion instead of freezing frames. VP9 SVC gives one encode
+          // with 3 layers viewers can drop to; VP8 backup covers old decoders.
+          screenShareEncoding: {
+            maxBitrate: 4_000_000,
+            maxFramerate: 30,
+            priority: "high",
+          },
           videoCodec: "vp9",
           backupCodec: true,
-          degradationPreference: "maintain-resolution",
+          degradationPreference: "maintain-framerate",
         },
       }),
     [],

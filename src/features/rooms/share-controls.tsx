@@ -44,7 +44,7 @@ export function ShareControls({
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
         audio: allowAudio,
         resolution: { width: 1920, height: 1080, frameRate: 30 },
-        contentHint: "detail", // optimise the encoder for text/UI sharpness
+        contentHint: "motion", // smooth playback of video content
         selfBrowserSurface: "include",
         surfaceSwitching: "include",
         systemAudio: allowAudio ? "include" : "exclude",

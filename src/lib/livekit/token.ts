@@ -17,7 +17,9 @@ export function livekitIdentity(identity: Identity): string {
   return `${identity.kind}:${identity.id}`;
 }
 
-const TOKEN_TTL_SECONDS = 20 * 60; // short-lived; client renews before expiry
+// Long enough that a mid-session socket drop always reconnects with a still
+// valid token; the client also renews it ~1 min before expiry.
+const TOKEN_TTL_SECONDS = 4 * 60 * 60;
 
 interface GrantArgs {
   roomId: string;
