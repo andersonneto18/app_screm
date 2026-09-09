@@ -74,3 +74,12 @@ request connections — add `https://<your-app>.vercel.app`.
 `docker-compose.yml` + `docker/livekit.yaml` run LiveKit + Redis locally. Point
 `LIVEKIT_URL` at `ws://localhost:7880` with the `devkey`/`devsecret` pair and
 run `docker compose up -d`.
+
+## 7. Room cover uploads (optional)
+
+Create a **Public** Blob store: Vercel → **Storage → Create Database → Blob**,
+region `fra1`, Access **Public**, connect it to the project (Production +
+Preview) with the read-write token. `BLOB_READ_WRITE_TOKEN` is injected
+automatically. Redeploy once so the running deployment picks it up. Until
+then (and if you skip this), covers are still settable by pasting an image
+URL in the room editor.
