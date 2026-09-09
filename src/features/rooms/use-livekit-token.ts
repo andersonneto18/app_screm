@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Grant {
   token: string;
@@ -10,6 +10,9 @@ interface Grant {
 
 type Status = "loading" | "ready" | "error" | "ended";
 
+/** Why the token request failed — drives the message the user sees. */
+export type TokenError = "auth" | "rate" | "network" | null;
+
 /**
  * Fetches a LiveKit token for the room and refreshes it a minute before it
  * expires, so a long session never drops on token expiry.
@@ -17,11 +20,13 @@ type Status = "loading" | "ready" | "error" | "ended";
 export function useLivekitToken(slug: string) {
   const [grant, setGrant] = useState<Grant | null>(null);
   const [status, setStatus] = useState<Status>("loading");
-  const retryRef = useRef<() => void>(() => {});
+  const [error, setError] = useState<TokenError>(null);
+  const runRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
 
     async function run() {
       try {
@@ -36,14 +41,24 @@ export function useLivekitToken(slug: string) {
           setStatus("ended");
           return;
         }
-        if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          // No access / session gone — retrying won't help.
+          setError("auth");
           setStatus("error");
-          timer = setTimeout(run, 5_000);
+          return;
+        }
+        if (!res.ok) {
+          attempt += 1;
+          setError(res.status === 429 ? "rate" : "network");
+          setStatus("error");
+          timer = setTimeout(run, Math.min(2_000 * attempt, 15_000));
           return;
         }
 
         const next = (await res.json()) as Grant;
         if (cancelled) return;
+        attempt = 0;
+        setError(null);
         setGrant(next);
         setStatus("ready");
 
@@ -54,13 +69,16 @@ export function useLivekitToken(slug: string) {
         timer = setTimeout(run, refreshIn);
       } catch {
         if (cancelled) return;
+        attempt += 1;
+        setError("network");
         setStatus("error");
-        timer = setTimeout(run, 5_000);
+        timer = setTimeout(run, Math.min(2_000 * attempt, 15_000));
       }
     }
 
-    retryRef.current = () => {
+    runRef.current = () => {
       clearTimeout(timer);
+      attempt = 0;
       void run();
     };
     void run();
@@ -71,5 +89,8 @@ export function useLivekitToken(slug: string) {
     };
   }, [slug]);
 
-  return { grant, status, retry: () => retryRef.current() };
+  // Stable identity — LiveKitRoom's connect effect keys on the callbacks it gets.
+  const retry = useCallback(() => runRef.current(), []);
+
+  return { grant, status, error, retry };
 }
