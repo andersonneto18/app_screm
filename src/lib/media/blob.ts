@@ -25,6 +25,45 @@ export function assertUploadable(file: { size: number; type: string }): void {
   }
 }
 
+/**
+ * Fetch an image from an arbitrary URL so it can be re-hosted on Blob.
+ * Rejects non-images (e.g. someone pasting a web-page link) and oversized files.
+ */
+export async function fetchRemoteImage(
+  url: string,
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("URL inválido");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error("URL inválido");
+  }
+
+  const res = await fetch(parsed, { redirect: "follow" }).catch(() => null);
+  if (!res || !res.ok) {
+    throw new Error("Não foi possível abrir esse URL");
+  }
+
+  const contentType = (res.headers.get("content-type") ?? "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (!ALLOWED.has(contentType)) {
+    throw new Error(
+      "Esse link não é uma imagem. Abra a imagem diretamente e copie o endereço dela (.jpg, .png, .webp).",
+    );
+  }
+
+  const bytes = await res.arrayBuffer();
+  if (bytes.byteLength > MAX_BYTES) {
+    throw new Error("Imagem demasiado grande (máx. 4 MB)");
+  }
+  return { bytes, contentType };
+}
+
 export async function uploadRoomCover(
   bytes: ArrayBuffer,
   contentType: string,

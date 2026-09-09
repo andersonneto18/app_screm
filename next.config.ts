@@ -26,7 +26,9 @@ const csp = [
   // but 'unsafe-eval' is dev-only.
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // Covers can be pasted image URLs (any host) or served from Vercel Blob.
+  // Images can't execute, so a broad https: source here is acceptable.
+  "img-src 'self' data: blob: https:",
   "media-src 'self' blob:",
   "font-src 'self' data:",
   `connect-src ${connectSrc}`,

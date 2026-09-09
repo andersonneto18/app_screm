@@ -258,6 +258,29 @@ export async function endRoom(roomId: string, actorId: string): Promise<void> {
   await recordAudit({ roomId, actorId, event: "room.ended" });
 }
 
+/**
+ * Bring an ENDED room back to life so the admin can reuse the same room
+ * (same link, cover and settings) instead of creating a new one. Resets it to
+ * WAITING; participants simply rejoin.
+ */
+export async function reopenRoom(roomId: string, actorId: string): Promise<void> {
+  const room = await db.room.findUnique({
+    where: { id: roomId },
+    select: { status: true, slug: true },
+  });
+  if (!room) throw Errors.notFound("Sala inexistente");
+  if (room.status !== "ENDED") {
+    throw Errors.conflict("A sala já está ativa");
+  }
+
+  await db.room.update({
+    where: { id: roomId },
+    data: { status: "WAITING", endedAt: null },
+  });
+  await recordAudit({ roomId, actorId, event: "room.reopened" });
+  logger.info({ roomId, slug: room.slug }, "Room reopened");
+}
+
 export async function setRoomStatus(
   roomId: string,
   status: "WAITING" | "LIVE",

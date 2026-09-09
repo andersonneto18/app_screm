@@ -3,6 +3,7 @@ import { loadRoomContext } from "@/lib/api/room-context";
 import {
   blobEnabled,
   assertUploadable,
+  fetchRemoteImage,
   uploadRoomCover,
   deleteRoomCover,
 } from "@/lib/media/blob";
@@ -20,12 +21,27 @@ export const POST = handleRoute<Ctx>(async (req, ctx) => {
     );
   }
 
-  const form = await req.formData().catch(() => null);
-  const file = form?.get("file");
-  if (!(file instanceof File)) throw Errors.badRequest("Ficheiro em falta");
+  const contentTypeHeader = req.headers.get("content-type") ?? "";
+  let bytes: ArrayBuffer;
+  let contentType: string;
 
   try {
-    assertUploadable(file);
+    if (contentTypeHeader.includes("application/json")) {
+      const body = (await req.json().catch(() => null)) as {
+        url?: unknown;
+      } | null;
+      if (typeof body?.url !== "string" || !body.url.trim()) {
+        throw new Error("URL em falta");
+      }
+      ({ bytes, contentType } = await fetchRemoteImage(body.url.trim()));
+    } else {
+      const form = await req.formData().catch(() => null);
+      const file = form?.get("file");
+      if (!(file instanceof File)) throw new Error("Ficheiro em falta");
+      assertUploadable(file);
+      bytes = await file.arrayBuffer();
+      contentType = file.type;
+    }
   } catch (err) {
     throw Errors.badRequest(
       err instanceof Error ? err.message : "Imagem inválida",
@@ -33,7 +49,7 @@ export const POST = handleRoute<Ctx>(async (req, ctx) => {
   }
 
   const previous = room.coverImage;
-  const url = await uploadRoomCover(await file.arrayBuffer(), file.type, room.id);
+  const url = await uploadRoomCover(bytes, contentType, room.id);
   await updateRoom(room.id, member.userId ?? member.id, { coverImage: url });
   await deleteRoomCover(previous);
 

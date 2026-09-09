@@ -8,6 +8,7 @@ import {
   Copy,
   ExternalLink,
   Link2,
+  RotateCcw,
   Square,
   Trash2,
   Users,
@@ -63,10 +64,25 @@ export function AdminRoomRow({
   }
 
   async function endRoom() {
-    if (!confirm(`Terminar "${room.name}"?`)) return;
+    if (
+      !confirm(
+        `Terminar "${room.name}"? A sala fica guardada no histórico e podes reabri-la depois com as mesmas definições.`,
+      )
+    )
+      return;
     setBusy(true);
     try {
       await fetch(`/api/rooms/${room.slug}`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopenRoom() {
+    setBusy(true);
+    try {
+      await fetch(`/api/admin/rooms/${room.slug}/reopen`, { method: "POST" });
       router.refresh();
     } finally {
       setBusy(false);
@@ -121,20 +137,18 @@ export function AdminRoomRow({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {room.status !== "ENDED" && (
-            <EditRoomDialog
-              room={{
-                slug: room.slug,
-                name: room.name,
-                description: room.description,
-                coverImage: room.coverImage,
-                visibility: room.visibility,
-                maxParticipants: room.maxParticipants,
-                locked: room.locked,
-              }}
-              uploadsEnabled={uploadsEnabled}
-            />
-          )}
+          <EditRoomDialog
+            room={{
+              slug: room.slug,
+              name: room.name,
+              description: room.description,
+              coverImage: room.coverImage,
+              visibility: room.visibility,
+              maxParticipants: room.maxParticipants,
+              locked: room.locked,
+            }}
+            uploadsEnabled={uploadsEnabled}
+          />
           <Button size="sm" variant="secondary" onClick={() => copy(roomLink, "link")}>
             {copied === "link" ? (
               <Check className="h-3.5 w-3.5" />
@@ -156,7 +170,7 @@ export function AdminRoomRow({
             )}
             Convite
           </Button>
-          {room.status !== "ENDED" && (
+          {room.status !== "ENDED" ? (
             <>
               <Button asChild size="sm">
                 <Link href={`/room/${room.slug}`}>
@@ -174,6 +188,11 @@ export function AdminRoomRow({
                 Terminar
               </Button>
             </>
+          ) : (
+            <Button size="sm" onClick={reopenRoom} disabled={busy}>
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reabrir
+            </Button>
           )}
           <button
             type="button"
