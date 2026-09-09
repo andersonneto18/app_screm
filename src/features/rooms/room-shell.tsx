@@ -38,7 +38,9 @@ export function RoomShell({
   const room = useMemo(
     () =>
       new Room({
-        adaptiveStream: true, // viewers only pull the quality their view needs
+        // Viewers pull the layer that matches their view — but count device
+        // pixel ratio, so a retina screen / fullscreen gets the crisp layer.
+        adaptiveStream: { pixelDensity: "screen" },
         dynacast: true, // pause layers nobody is watching
         publishDefaults: {
           // Tuned for broadcasting video content (watch-party) rather than
