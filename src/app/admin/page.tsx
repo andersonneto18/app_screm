@@ -11,6 +11,7 @@ import { blobEnabled } from "@/lib/media/blob";
 import { CreateRoomDialog } from "@/features/rooms/create-room-dialog";
 import { AdminRoomRow } from "@/features/admin/admin-room-row";
 import { AdminSettings } from "@/features/admin/admin-settings";
+import { PurgeEndedButton } from "@/features/admin/purge-ended-button";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -73,6 +74,7 @@ export default async function AdminPage() {
             rooms={ended.slice(0, 20)}
             uploadsEnabled={blobEnabled}
             muted
+            action={<PurgeEndedButton count={ended.length} />}
           />
         )}
 
@@ -115,18 +117,23 @@ function Group({
   rooms,
   uploadsEnabled,
   muted,
+  action,
 }: {
   title: string;
   rooms: Awaited<ReturnType<typeof listAllRooms>>;
   uploadsEnabled: boolean;
   muted?: boolean;
+  action?: React.ReactNode;
 }) {
   if (rooms.length === 0) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-        {title}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          {title}
+        </h2>
+        {action}
+      </div>
       <div className={`mt-3 space-y-2 ${muted ? "opacity-70" : ""}`}>
         {rooms.map((room) => (
           <AdminRoomRow

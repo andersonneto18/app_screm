@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Copy, ExternalLink, Link2, Square, Users } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Link2,
+  Square,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AdminRoomRow as Row } from "@/server/services/room-queries";
@@ -59,6 +67,18 @@ export function AdminRoomRow({
     setBusy(true);
     try {
       await fetch(`/api/rooms/${room.slug}`, { method: "DELETE" });
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteRoom() {
+    if (!confirm(`Apagar "${room.name}" definitivamente? Não há como recuperar.`))
+      return;
+    setBusy(true);
+    try {
+      await fetch(`/api/admin/rooms/${room.slug}`, { method: "DELETE" });
       router.refresh();
     } finally {
       setBusy(false);
@@ -155,6 +175,15 @@ export function AdminRoomRow({
               </Button>
             </>
           )}
+          <button
+            type="button"
+            onClick={deleteRoom}
+            disabled={busy}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-danger hover:bg-danger/10 disabled:opacity-50"
+            aria-label={`Apagar ${room.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Apagar
+          </button>
         </div>
       </div>
 

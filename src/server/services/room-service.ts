@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import type { CreateRoomInput, UpdateRoomInput } from "@/schemas/room";
 import type { Identity } from "@/lib/auth/session";
 import { deleteLivekitRoom } from "@/lib/livekit/token";
+import { deleteRoomCover } from "@/lib/media/blob";
 import { recordAudit } from "./audit-service";
 
 const MAX_SLUG_ATTEMPTS = 5;
@@ -265,4 +266,39 @@ export async function setRoomStatus(
     where: { id: roomId, status: { not: "ENDED" } },
     data: { status },
   });
+}
+
+/**
+ * Permanently delete a room and everything under it (members, invites, bans,
+ * chat, audit — via ON DELETE CASCADE). Also tears down its LiveKit room and
+ * cover image. Admin-only at the call site.
+ */
+export async function deleteRoom(roomId: string, actorId: string): Promise<void> {
+  const room = await db.room.findUnique({
+    where: { id: roomId },
+    select: { coverImage: true, slug: true },
+  });
+  if (!room) throw Errors.notFound("Sala inexistente");
+
+  await deleteLivekitRoom(roomId);
+  await deleteRoomCover(room.coverImage);
+  await db.room.delete({ where: { id: roomId } });
+
+  await recordAudit({ actorId, event: "room.deleted", metadata: { slug: room.slug } });
+  logger.info({ roomId, slug: room.slug }, "Room permanently deleted");
+}
+
+/** Bulk-remove every ENDED room. Returns how many were deleted. */
+export async function purgeEndedRooms(actorId: string): Promise<number> {
+  const ended = await db.room.findMany({
+    where: { status: "ENDED" },
+    select: { id: true, coverImage: true },
+  });
+  for (const r of ended) {
+    await deleteLivekitRoom(r.id);
+    await deleteRoomCover(r.coverImage);
+  }
+  const { count } = await db.room.deleteMany({ where: { status: "ENDED" } });
+  await recordAudit({ actorId, event: "rooms.purged", metadata: { count } });
+  return count;
 }
