@@ -43,7 +43,9 @@ export function ShareControls({
       // Let the browser present its own screen/window/tab picker; never auto-pick.
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
         audio: allowAudio,
-        resolution: { width: 1920, height: 1080, frameRate: 30 },
+        // 720p: sharp on phones (the main audience), far lighter to encode
+        // and stream than 1080p, so the broadcast holds up better.
+        resolution: { width: 1280, height: 720, frameRate: 30 },
         contentHint: "motion", // smooth playback of video content
         selfBrowserSurface: "include",
         surfaceSwitching: "include",

@@ -43,17 +43,19 @@ export function RoomShell({
         adaptiveStream: { pixelDensity: "screen" },
         dynacast: true, // pause layers nobody is watching
         publishDefaults: {
-          // Tuned for broadcasting video content (watch-party) rather than
-          // static UI: keep motion smooth and let resolution scale down under
-          // congestion instead of freezing frames. VP9 SVC gives one encode
-          // with 3 layers viewers can drop to; VP8 backup covers old decoders.
+          // Audience is mostly phones watching video content. 720p is
+          // indistinguishable from 1080p on a ~6" screen but roughly halves
+          // the host's encode load and everyone's data use — the biggest win
+          // against stutter. VP9 SVC: one encode, 3 layers each viewer picks
+          // from; motion stays smooth and resolution scales down (not freezes)
+          // under congestion. VP8 backup covers the rare non-VP9 device.
           screenShareEncoding: {
-            maxBitrate: 6_000_000, // headroom for crisp 1080p30 motion
+            maxBitrate: 3_500_000, // ample for crisp 720p30 motion
             maxFramerate: 30,
             priority: "high",
           },
           videoCodec: "vp9",
-          scalabilityMode: "L3T3_KEY", // top layer = full 1080p, independently decodable
+          scalabilityMode: "L3T3_KEY",
           backupCodec: true,
           degradationPreference: "maintain-framerate",
         },
