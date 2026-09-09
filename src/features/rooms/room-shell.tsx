@@ -48,11 +48,12 @@ export function RoomShell({
           // congestion instead of freezing frames. VP9 SVC gives one encode
           // with 3 layers viewers can drop to; VP8 backup covers old decoders.
           screenShareEncoding: {
-            maxBitrate: 4_000_000,
+            maxBitrate: 6_000_000, // headroom for crisp 1080p30 motion
             maxFramerate: 30,
             priority: "high",
           },
           videoCodec: "vp9",
+          scalabilityMode: "L3T3_KEY", // top layer = full 1080p, independently decodable
           backupCodec: true,
           degradationPreference: "maintain-framerate",
         },
