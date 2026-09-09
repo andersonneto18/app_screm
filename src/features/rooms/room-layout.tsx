@@ -17,6 +17,7 @@ import { ShareControls } from "./share-controls";
 import { InvitePanel } from "./invite-panel";
 import { ParticipantMenu } from "./participant-menu";
 import { ChatPanel } from "./chat-panel";
+import { QualityMenu } from "./quality-menu";
 import { ReactionBar, ReactionOverlay, useReactions } from "./reactions";
 
 type Tab = "participants" | "chat";
@@ -105,6 +106,7 @@ export function RoomLayout({
               onStatusChange={refreshDetail}
             />
             <ReactionBar onReact={react} />
+            {!isOwner && <QualityMenu />}
             {!isOwner && <FullscreenButton />}
 
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
