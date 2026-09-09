@@ -18,6 +18,7 @@ import { InvitePanel } from "./invite-panel";
 import { ParticipantMenu } from "./participant-menu";
 import { ChatPanel } from "./chat-panel";
 import { QualityMenu } from "./quality-menu";
+import { StreamStats } from "./stream-stats";
 import { ReactionBar, ReactionOverlay, useReactions } from "./reactions";
 
 type Tab = "participants" | "chat";
@@ -96,6 +97,7 @@ export function RoomLayout({
           <div className="relative aspect-video w-full overflow-hidden bg-black lg:aspect-auto lg:min-h-0 lg:flex-1">
             <ScreenStage isOwner={isOwner} />
             <ReactionOverlay floating={floating} />
+            {!isOwner && <StreamStats />}
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border px-3 py-2 sm:gap-2 sm:px-4 sm:py-3">

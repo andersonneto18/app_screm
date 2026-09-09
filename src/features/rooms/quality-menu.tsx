@@ -5,15 +5,7 @@ import { useTracks } from "@livekit/components-react";
 import { Track, VideoQuality, type RemoteTrackPublication } from "livekit-client";
 import { Gauge } from "lucide-react";
 
-type Choice =
-  | "auto"
-  | "max"
-  | "high"
-  | "mid"
-  | "midlow"
-  | "low"
-  | "min"
-  | "audio";
+type Choice = "auto" | "max" | "high" | "mid" | "low" | "saver" | "audio";
 
 interface Option {
   value: Choice;
@@ -26,33 +18,35 @@ interface Option {
   fps?: number;
 }
 
+// The broadcast is VP9 SVC — one encode, a couple of spatial layers
+// (~1080p and ~540p) plus a bottom layer. Resolution requests round to the
+// nearest real layer; the frame-rate cap is exact and per-viewer.
 const OPTIONS: Option[] = [
   { value: "auto", label: "Automática" },
   {
     value: "max",
-    label: "Máxima · 1080p",
+    label: "Máxima · até 1080p",
     dims: { width: 1920, height: 1080 },
     fps: 30,
   },
   {
     value: "high",
-    label: "Alta · 1080p · 20 fps",
+    label: "Alta · até 1080p · 20 fps",
     dims: { width: 1920, height: 1080 },
     fps: 20,
   },
-  { value: "mid", label: "Média · 540p", quality: VideoQuality.MEDIUM, fps: 30 },
+  { value: "mid", label: "Média · ~540p", quality: VideoQuality.MEDIUM, fps: 30 },
   {
-    value: "midlow",
-    label: "Média · 540p · 15 fps",
-    quality: VideoQuality.MEDIUM,
+    value: "low",
+    label: "Baixa · menor · 15 fps",
+    quality: VideoQuality.LOW,
     fps: 15,
   },
-  { value: "low", label: "Baixa · 270p", quality: VideoQuality.LOW, fps: 30 },
   {
-    value: "min",
-    label: "Dados mínimos · 270p · 10 fps",
+    value: "saver",
+    label: "Poupar dados · menor · 8 fps",
     quality: VideoQuality.LOW,
-    fps: 10,
+    fps: 8,
   },
   { value: "audio", label: "Só áudio" },
 ];
