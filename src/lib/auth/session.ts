@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { generateGuestId } from "@/lib/security/ids";
-import { isAdminEmail } from "@/lib/auth/admin";
+import { isAdminEmail } from "@/lib/auth/admin-emails";
 
 const GUEST_COOKIE = "sr_guest";
 const GUEST_MAX_AGE = 60 * 60 * 24 * 7;

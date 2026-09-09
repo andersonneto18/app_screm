@@ -7,7 +7,9 @@ import { logger } from "@/lib/logger";
  *  - per-email throttle — blocks hammering one account
  *  - per-email lockout  — temporary block after repeated wrong passwords
  */
-const IP_RULE = { limit: 10, windowMs: 60_000 };
+// Per-IP is only anti-spray (many friends can share one home connection);
+// the real per-account brute-force defence is EMAIL_RULE + LOCKOUT_RULE.
+const IP_RULE = { limit: 40, windowMs: 60_000 };
 const EMAIL_RULE = { limit: 5, windowMs: 60_000 };
 const LOCKOUT_RULE = { limit: 10, windowMs: 15 * 60_000 };
 
