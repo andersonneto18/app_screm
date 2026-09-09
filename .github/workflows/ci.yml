@@ -5,6 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  # postinstall runs `prisma generate` (reads the config, not the DB);
+  # `next typegen` reads next.config.ts. None of these connect anywhere.
+  DATABASE_URL: postgresql://user:pass@localhost:5432/db
+  DIRECT_URL: postgresql://user:pass@localhost:5432/db
+  AUTH_SECRET: ci-placeholder-secret
+  LIVEKIT_URL: wss://ci.invalid
+  NEXT_PUBLIC_LIVEKIT_URL: wss://ci.invalid
+  LIVEKIT_API_KEY: ci
+  LIVEKIT_API_SECRET: ci-placeholder-secret-value
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -15,9 +27,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-        env:
-          # postinstall runs `prisma generate`; it reads the config, not the DB.
-          DATABASE_URL: postgresql://user:pass@localhost:5432/db
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test
